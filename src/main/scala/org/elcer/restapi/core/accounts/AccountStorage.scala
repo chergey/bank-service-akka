@@ -9,7 +9,7 @@ sealed trait AccountStorage {
 
   def getAccounts: Future[Seq[Account]]
 
-  def getAccount(id: String): Future[Option[Account]]
+  def getAccount(id: Int): Future[Option[Account]]
 
   def saveAccount(account: Account): Future[Account]
 
@@ -28,7 +28,7 @@ class JdbcAccountStorage(
 
   def getAccounts: Future[Seq[Account]] = db.run(accounts.result)
 
-  def getAccount(id: String): Future[Option[Account]] = db.run(accounts.filter(_.id === id).result.headOption)
+  def getAccount(id: Int): Future[Option[Account]] = db.run(accounts.filter(_.id === id).result.headOption)
 
   def saveAccount(account: Account): Future[Account] =
     db.run(accounts.insertOrUpdate(account)).map(_ => account)
@@ -59,7 +59,7 @@ class InMemoryAccountStorage extends AccountStorage {
   override def getAccounts: Future[Seq[Account]] =
     Future.successful(state)
 
-  override def getAccount(id: String): Future[Option[Account]] =
+  override def getAccount(id: Int): Future[Option[Account]] =
     Future.successful(state.find(_.id == id))
 
   override def saveAccount(account: Account): Future[Account] =

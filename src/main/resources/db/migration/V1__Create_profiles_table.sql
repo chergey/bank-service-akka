@@ -1,5 +1,5 @@
 CREATE TABLE "accounts" (
-  "id"       VARCHAR PRIMARY KEY,
+  "id"       INT PRIMARY KEY,
   "balance" FLOAT NOT NULL,
   "name" VARCHAR NOT NULL
 );

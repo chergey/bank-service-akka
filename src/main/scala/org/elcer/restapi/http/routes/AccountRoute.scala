@@ -5,6 +5,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.circe.generic.auto._
+import org.elcer.restapi.core.Account
 import org.elcer.restapi.core.accounts.AccountService
 import org.elcer.restapi.core.auth.AuthService
 
@@ -22,33 +23,16 @@ class AccountRoute(authService: AuthService, accountService: AccountService)(imp
     path("transfer") {
       pathEndOrSingleSlash {
         get {
-          parameters('from.as[String], 'to.as[String], 'amount.as[Float]) {
+          parameters('from.as[Int], 'to.as[Int], 'amount.as[Float]) {
             (from, to, amount) =>
               complete {
                 if (amount <= 0) {
-                  complete(HttpResponse(StatusCodes.InternalServerError, entity = "Amount can'be equal or less zero!"))
-                }
-
-                Await.ready(accountService.getAccount(from), Duration.Inf).onComplete { res => {
-                  res match {
-                    case scala.util.Failure(value) => complete(HttpResponse(InternalServerError, entity = "Error"))
-                    case scala.util.Success(fs) => fs match {
-                      case None => complete(HttpResponse(InternalServerError, entity = s"Account $from not found"))
-                      case Some(f) =>
-                        Await.ready(accountService.getAccount(to), Duration.Inf).onComplete { res => {
-                          res match {
-                            case scala.util.Failure(_) => complete(HttpResponse(InternalServerError, entity = "Error"))
-                            case scala.util.Success(ts) => ts match {
-                              case None => complete(HttpResponse(InternalServerError, entity = s"Account $to not found"))
-                              case Some(t) => accountService.transfer(f, t, amount)
-                            }
-                          }
-                        }
-                        }
-                    }
-                  }
-                }
-
+                  HttpResponse(StatusCodes.InternalServerError, entity = "Amount can'be equal or less zero!")
+                } else {
+                  if (from > to)
+                    process(from, to, amount)
+                  else
+                    process(to, from, amount)
                 }
               }
           }
@@ -64,6 +48,30 @@ class AccountRoute(authService: AuthService, accountService: AccountService)(imp
           }
         }
       }
+  }
+
+  private def process(acc1: Int, acc2: Int, amount: Float): Unit = {
+    Await.result(accountService.getAccount(acc1), Duration.Inf) match {
+      case None => HttpResponse(InternalServerError, entity = s"Account $acc1 not found")
+      case Some(a1) =>
+        if (checkMoney(a1, amount)) {
+          Await.result(accountService.getAccount(acc2), Duration.Inf) match {
+            case None => HttpResponse(InternalServerError, entity = s"Account $acc2 not found")
+            case Some(a2) =>
+              accountService.transfer(a1, a2, amount)
+              HttpResponse(StatusCodes.OK, entity = "Money transferred successfully!")
+          }
+
+        }
+        else {
+          HttpResponse(InternalServerError, entity = "Not enough money")
+        }
+    }
+
+  }
+
+  private def checkMoney(acc: Account, amount: Float): Boolean = {
+    acc.balance >= amount
   }
 
   private case class LoginPassword(login: String, password: String)

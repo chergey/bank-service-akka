@@ -2,19 +2,21 @@ package org.elcer.restapi.core.auth
 
 import java.util.UUID
 
-import org.elcer.restapi.core.{ AuthData, AuthToken, AuthTokenContent, UserId }
+import org.elcer.restapi.core.{AuthData, AuthToken, AuthTokenContent, UserId}
 import org.elcer.restapi.utils.MonadTransformers._
 import com.roundeights.hasher.Implicits._
-import pdi.jwt.{ Jwt, JwtAlgorithm }
+import pdi.jwt.{Jwt, JwtAlgorithm}
 import io.circe.syntax._
 import io.circe.generic.auto._
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Random
 
 class AuthService(
     authDataStorage: AuthDataStorage,
     secretKey: String
 )(implicit executionContext: ExecutionContext) {
+
 
   def signIn(login: String, password: String): Future[Option[AuthToken]] =
     authDataStorage
@@ -24,7 +26,7 @@ class AuthService(
 
   def signUp(login: String, email: String, password: String): Future[AuthToken] =
     authDataStorage
-      .saveAuthData(AuthData(UUID.randomUUID().toString, login, email, password.sha256.hex))
+      .saveAuthData(AuthData(Random.nextInt(Int.MaxValue), login, email, password.sha256.hex))
       .map(authData => encodeToken(authData.id))
 
   private def encodeToken(userId: UserId): AuthToken =

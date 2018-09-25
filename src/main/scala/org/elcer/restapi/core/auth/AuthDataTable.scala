@@ -9,7 +9,7 @@ private[auth] trait AuthDataTable {
   import databaseConnector.account.api._
 
   class AuthDataSchema(tag: Tag) extends Table[AuthData](tag, "auth") {
-    def id       = column[String]("id", O.PrimaryKey)
+    def id       = column[Int]("id", O.PrimaryKey)
     def username = column[String]("username")
     def email    = column[String]("email")
     def password = column[String]("password")

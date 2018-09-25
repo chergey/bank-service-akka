@@ -2,11 +2,7 @@ package org.elcer.restapi.utils
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-/**
-  * Monad transformers its classes that extends default monad's like Future or Option.
-  * They handle situation when monad's contain each other, its helping to reduce amount of boilerplate code.
-  * For example in that project there are lots of Future[Option[T] classes that must be handled somehow.
-  */
+
 object MonadTransformers {
 
   implicit class FutureOptionMonadTransformer[A](t: Future[Option[A]])(implicit executionContext: ExecutionContext) {
@@ -22,14 +18,6 @@ object MonadTransformers {
           None
       }
 
-    def flatMapT[B](f: A => Future[Option[B]]): Future[Option[B]] =
-      t.flatMap {
-        case Some(data) =>
-          f(data)
-        case None =>
-          Future.successful(None)
-      }
-
     def flatMapTOuter[B](f: A => Future[B]): Future[Option[B]] =
       t.flatMap {
         case Some(data) =>
@@ -37,9 +25,6 @@ object MonadTransformers {
         case None =>
           Future.successful(None)
       }
-
-    def flatMapTInner[B](f: A => Option[B]): Future[Option[B]] =
-      t.map(_.flatMap(f))
 
   }
 

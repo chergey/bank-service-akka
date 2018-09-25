@@ -9,7 +9,7 @@ private[accounts] trait AccountTable {
   import databaseConnector.account.api._
 
   class Accounts(tag: Tag) extends Table[Account](tag, "accounts") {
-    def id        = column[String]("id", O.PrimaryKey)
+    def id        = column[Int]("id", O.PrimaryKey)
     def balance = column[Float]("balance")
     def name  = column[String]("name")
 

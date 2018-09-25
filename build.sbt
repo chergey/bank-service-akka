@@ -21,10 +21,10 @@ libraryDependencies ++= {
     "com.typesafe.slick" %% "slick" % slickVersion,
 
     // Postgres driver
-    "org.postgresql" % "postgresql" % "42.1.4",
+    "org.postgresql" % "postgresql" % "42.2.5",
 
     // Migration for SQL databases
-    "org.flywaydb" % "flyway-core" % "4.2.0",
+    "org.flywaydb" % "flyway-core" % "5.1.4",
 
     // Connection pool for database
     "com.zaxxer" % "HikariCP" % "2.7.0",

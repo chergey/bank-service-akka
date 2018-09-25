@@ -12,7 +12,7 @@ class AccountService(
   def getAccounts: Future[Seq[Account]] =
     accountStorage.getAccounts
 
-  def getAccount(id: String): Future[Option[Account]] =
+  def getAccount(id: Int): Future[Option[Account]] =
     accountStorage.getAccount(id)
 
   def createAccount(account: Account): Future[Account] =
@@ -22,7 +22,7 @@ class AccountService(
     accountStorage.updateBalance(from, to, amount)
   }
 
-  def updateAccount(id: String, accountUpdate: AccountUpdate): Future[Option[Account]] =
+  def updateAccount(id: Int, accountUpdate: AccountUpdate): Future[Option[Account]] =
     accountStorage
       .getAccount(id)
       .mapT(accountUpdate.merge)
