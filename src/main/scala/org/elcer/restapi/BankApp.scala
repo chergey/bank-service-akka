@@ -12,7 +12,7 @@ import org.elcer.restapi.core.auth.{AuthService, JdbcAuthDataStorage}
 
 import scala.concurrent.ExecutionContext
 
-object Boot extends App {
+object BankApp extends App {
 
   def startApplication() = {
     implicit val actorSystem: ActorSystem = ActorSystem()
