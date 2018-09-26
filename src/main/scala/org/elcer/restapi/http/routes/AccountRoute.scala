@@ -50,24 +50,24 @@ class AccountRoute(authService: AuthService, accountService: AccountService)(imp
       }
   }
 
-  private def process(acc1: Int, acc2: Int, amount: Float): Unit = {
-    Await.result(accountService.getAccount(acc1), Duration.Inf) match {
-      case None => HttpResponse(InternalServerError, entity = s"Account $acc1 not found")
-      case Some(a1) =>
-        if (checkMoney(a1, amount)) {
-          Await.result(accountService.getAccount(acc2), Duration.Inf) match {
-            case None => HttpResponse(InternalServerError, entity = s"Account $acc2 not found")
-            case Some(a2) =>
-              accountService.transfer(a1, a2, amount)
-              HttpResponse(StatusCodes.OK, entity = "Money transferred successfully!")
-          }
+  private def process(acc1: Int, acc2: Int, amount: Float): HttpResponse = {
+    var ac1 = Await.result(accountService.getAccount(acc1), Duration.Inf).orNull
 
-        }
-        else {
-          HttpResponse(InternalServerError, entity = "Not enough money")
-        }
+    if (ac1 == null) {
+      return HttpResponse(InternalServerError, entity = s"Account $acc1 not found")
     }
 
+    var ac2 = Await.result(accountService.getAccount(acc2), Duration.Inf).orNull
+
+    if (ac2 == null)
+      return HttpResponse(InternalServerError, entity = s"Account $acc2 not found")
+
+    if (ac1.balance < amount)
+      return HttpResponse(InternalServerError, entity = "Not enough money")
+
+    accountService.transfer(ac1, ac2, amount)
+
+    HttpResponse(InternalServerError, entity = "Transferred successfully")
   }
 
   private def checkMoney(acc: Account, amount: Float): Boolean = {

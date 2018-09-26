@@ -1,5 +1,7 @@
 package org.elcer.restapi.core.accounts
 
+import java.util.concurrent.locks.{Lock, ReentrantLock, ReentrantReadWriteLock}
+
 import org.elcer.restapi.core.Account
 import org.elcer.restapi.utils.db.DatabaseConnector
 
@@ -14,7 +16,6 @@ sealed trait AccountStorage {
   def saveAccount(account: Account): Future[Account]
 
   def updateBalance(from: Account, to: Account, amount: Float): Unit
-
 }
 
 class JdbcAccountStorage(
@@ -43,7 +44,7 @@ class JdbcAccountStorage(
 
       balanceTo <- toRows.result.headOption
       updateActionOptionTo = balanceTo.map(b => toRows.update(amount))
-      affected <- updateActionOptionTo .getOrElse(DBIO.successful(0))
+      affected <- updateActionOptionTo.getOrElse(DBIO.successful(0))
     } yield affected).transactionally
 
     db.run(actions)
@@ -55,6 +56,7 @@ class JdbcAccountStorage(
 class InMemoryAccountStorage extends AccountStorage {
 
   private var state: Seq[Account] = Nil
+  private val locks: Seq[Lock] = Nil
 
   override def getAccounts: Future[Seq[Account]] =
     Future.successful(state)
@@ -69,5 +71,24 @@ class InMemoryAccountStorage extends AccountStorage {
       account
     }
 
-  override   def updateBalance(from: Account, to: Account, amount: Float): Unit = ???
+  override def updateBalance(from: Account, to: Account, amount: Float): Unit = {
+    var fromLock = locks(from.id)
+    var toLock = locks(to.id)
+    if (locks(from.id) == null) {
+      fromLock = new ReentrantLock()
+    }
+
+    if (locks(to.id) == null) {
+      toLock = new ReentrantLock()
+    }
+
+    if (from.id < to.id) {
+      fromLock.lock()
+      toLock.lock()
+    } else {
+      toLock.lock()
+      fromLock.lock()
+    }
+
+  }
 }
