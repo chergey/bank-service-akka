@@ -18,8 +18,8 @@ class AccountService(
   def createAccount(account: Account): Future[Account] =
     accountStorage.saveAccount(account)
 
-  def transfer(from: Account, to: Account, amount: Float): Unit = {
-    accountStorage.updateBalance(from, to, amount)
+  def transferFunds(from: Account, to: Account, amount: Float): Unit = {
+    accountStorage.transferFunds(from, to, amount)
   }
 
   def updateAccount(id: Int, accountUpdate: AccountUpdate): Future[Option[Account]] =

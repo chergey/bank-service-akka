@@ -65,7 +65,7 @@ class AccountRoute(authService: AuthService, accountService: AccountService)(imp
     if (ac1.balance < amount)
       return HttpResponse(InternalServerError, entity = "Not enough money")
 
-    accountService.transfer(ac1, ac2, amount)
+    accountService.transferFunds(ac1, ac2, amount)
 
     HttpResponse(InternalServerError, entity = "Transferred successfully")
   }

@@ -1,5 +1,6 @@
 package org.elcer.restapi.core.accounts
 
+import java.util.concurrent.Semaphore
 import java.util.concurrent.locks.{Lock, ReentrantLock, ReentrantReadWriteLock}
 
 import org.elcer.restapi.core.Account
@@ -15,7 +16,7 @@ sealed trait AccountStorage {
 
   def saveAccount(account: Account): Future[Account]
 
-  def updateBalance(from: Account, to: Account, amount: Float): Unit
+  def transferFunds(from: Account, to: Account, amount: Float): Unit
 }
 
 class JdbcAccountStorage(
@@ -34,7 +35,7 @@ class JdbcAccountStorage(
   def saveAccount(account: Account): Future[Account] =
     db.run(accounts.insertOrUpdate(account)).map(_ => account)
 
-  def updateBalance(from: Account, to: Account, amount: Float): Unit = {
+  def transferFunds(from: Account, to: Account, amount: Float): Unit = {
     val fromRows = accounts.filter(_.id === from.id).map(_.balance)
     val toRows = accounts.filter(_.id === to.id).map(_.balance)
     val actions = (for {
@@ -56,7 +57,7 @@ class JdbcAccountStorage(
 class InMemoryAccountStorage extends AccountStorage {
 
   private var state: Seq[Account] = Nil
-  private val locks: Seq[Lock] = Nil
+  private val locks = scala.collection.mutable.Map[Int, Semaphore]()
 
   override def getAccounts: Future[Seq[Account]] =
     Future.successful(state)
@@ -71,24 +72,27 @@ class InMemoryAccountStorage extends AccountStorage {
       account
     }
 
-  override def updateBalance(from: Account, to: Account, amount: Float): Unit = {
-    var fromLock = locks(from.id)
-    var toLock = locks(to.id)
-    if (locks(from.id) == null) {
-      fromLock = new ReentrantLock()
-    }
-
-    if (locks(to.id) == null) {
-      toLock = new ReentrantLock()
-    }
+  override def transferFunds(from: Account, to: Account, amount: Float): Unit = {
+    var fromLock = locks.getOrElseUpdate(from.id, new Semaphore(1))
+    var toLock = locks.getOrElseUpdate(to.id, new Semaphore(1))
 
     if (from.id < to.id) {
-      fromLock.lock()
-      toLock.lock()
-    } else {
-      toLock.lock()
-      fromLock.lock()
+      fromLock.acquire()
+      toLock.acquire()
+          } else {
+            toLock.acquire()
+            fromLock.acquire()
     }
 
+    from.balance -= amount
+    to.balance += amount
+
+    if (from.id < to.id) {
+      fromLock.release()
+      toLock.release()
+    } else {
+      toLock.release()
+      fromLock.release()
+    }
   }
 }
