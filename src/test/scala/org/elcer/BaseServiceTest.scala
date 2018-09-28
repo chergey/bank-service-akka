@@ -11,7 +11,4 @@ trait BaseServiceTest extends WordSpec with Matchers with ScalatestRouteTest wit
 
   def awaitForResult[T](futureResult: Future[T]): T =
     Await.result(futureResult, 5.seconds)
-
-  def awaitNoResult[T](futureResult: Future[T]): Unit =
-    Await.result(futureResult, 5.seconds)
 }

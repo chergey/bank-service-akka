@@ -5,7 +5,6 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.circe.generic.auto._
-import org.elcer.restapi.core.Account
 import org.elcer.restapi.core.accounts.AccountService
 import org.elcer.restapi.core.auth.AuthService
 
@@ -70,9 +69,6 @@ class AccountRoute(authService: AuthService, accountService: AccountService)(imp
     HttpResponse(InternalServerError, entity = "Transferred successfully")
   }
 
-  private def checkMoney(acc: Account, amount: Float): Boolean = {
-    acc.balance >= amount
-  }
 
   private case class LoginPassword(login: String, password: String)
 

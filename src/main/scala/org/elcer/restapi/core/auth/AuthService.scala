@@ -1,6 +1,5 @@
 package org.elcer.restapi.core.auth
 
-import java.util.UUID
 
 import org.elcer.restapi.core.{AuthData, AuthToken, AuthTokenContent, UserId}
 import org.elcer.restapi.utils.MonadTransformers._

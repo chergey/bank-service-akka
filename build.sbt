@@ -1,7 +1,7 @@
 name := "bank-service-akka"
 organization := "org.elcer"
 version := "1.0.0"
-scalaVersion := "2.12.6"
+scalaVersion := "2.12.7"
 
 libraryDependencies ++= {
   val akkaHttpV = "10.1.3"
@@ -19,9 +19,9 @@ libraryDependencies ++= {
 
     // SQL generator
     "com.typesafe.slick" %% "slick" % slickVersion,
-
-    // Postgres driver
-    "org.postgresql" % "postgresql" % "42.2.5",
+    
+    //derby
+    "org.apache.derby" % "derby" % "10.14.2.0" ,
 
     // Migration for SQL databases
     "org.flywaydb" % "flyway-core" % "5.1.4",
@@ -55,7 +55,6 @@ libraryDependencies ++= {
 
     "org.scalatest" %% "scalatest" % scalaTestV % Test,
     "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % Test,
-    "ru.yandex.qatools.embed" % "postgresql-embedded" % "2.4" % Test,
     "org.mockito" % "mockito-all" % "1.9.5" % Test
   )
 }

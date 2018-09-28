@@ -73,19 +73,26 @@ class InMemoryAccountStorage extends AccountStorage {
     }
 
   override def transferFunds(from: Account, to: Account, amount: Float): Unit = {
-    var fromLock = locks.getOrElseUpdate(from.id, new Semaphore(1))
-    var toLock = locks.getOrElseUpdate(to.id, new Semaphore(1))
+    val fromLock = locks.getOrElseUpdate(from.id, new Semaphore(1))
+    val toLock = locks.getOrElseUpdate(to.id, new Semaphore(1))
 
     if (from.id < to.id) {
       fromLock.acquire()
       toLock.acquire()
-          } else {
-            toLock.acquire()
-            fromLock.acquire()
+    } else {
+      toLock.acquire()
+      fromLock.acquire()
     }
 
-    from.balance -= amount
-    to.balance += amount
+    val debit = state.filter(_.id == from.id).head
+    val credit = state.filter(_.id == to.id).head
+
+    // println(debit.balance, credit.balance, amount, Thread.currentThread().getName)
+
+    if (debit.balance >= amount && amount > 0) {
+      debit.balance -= amount
+      credit.balance += amount
+    }
 
     if (from.id < to.id) {
       fromLock.release()
