@@ -1,7 +1,7 @@
-package org.elcer.restapi.core.auth
+package org.elcer.accounts.core.auth
 
-import org.elcer.restapi.core.AuthData
-import org.elcer.restapi.utils.db.DatabaseConnector
+import org.elcer.accounts.core.AuthData
+import org.elcer.accounts.utils.db.DatabaseConnector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -14,9 +14,9 @@ sealed trait AuthDataStorage {
 }
 
 class JdbcAuthDataStorage(
-    val databaseConnector: DatabaseConnector
-)(implicit executionContext: ExecutionContext)
-    extends AuthDataTable
+                           val databaseConnector: DatabaseConnector
+                         )(implicit executionContext: ExecutionContext)
+  extends AuthDataTable
     with AuthDataStorage {
 
   import databaseConnector._

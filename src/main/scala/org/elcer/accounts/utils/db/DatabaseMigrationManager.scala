@@ -1,4 +1,4 @@
-package org.elcer.restapi.utils.db
+package org.elcer.accounts.utils.db
 
 import org.flywaydb.core.Flyway
 

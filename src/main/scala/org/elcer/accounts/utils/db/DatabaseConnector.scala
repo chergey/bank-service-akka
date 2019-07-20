@@ -1,6 +1,6 @@
-package org.elcer.restapi.utils.db
+package org.elcer.accounts.utils.db
 
-import com.zaxxer.hikari.{ HikariConfig, HikariDataSource }
+import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 
 class DatabaseConnector(jdbcUrl: String, dbUser: String, dbPassword: String) {
 
@@ -13,10 +13,11 @@ class DatabaseConnector(jdbcUrl: String, dbUser: String, dbPassword: String) {
     new HikariDataSource(hikariConfig)
   }
 
-  val account = slick.jdbc.PostgresProfile
+  val account = slick.jdbc.DerbyProfile
+
   import account.api._
 
-  val db = Database.forDataSource(hikariDataSource, None)
+  val db: account.backend.DatabaseDef = Database.forDataSource(hikariDataSource, None)
   db.createSession()
 
 }

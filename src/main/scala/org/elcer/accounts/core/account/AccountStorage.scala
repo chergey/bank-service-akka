@@ -1,10 +1,10 @@
-package org.elcer.restapi.core.accounts
+package org.elcer.accounts.core.account
 
 import java.util.concurrent.Semaphore
 import java.util.concurrent.locks.{Lock, ReentrantLock, ReentrantReadWriteLock}
 
-import org.elcer.restapi.core.Account
-import org.elcer.restapi.utils.db.DatabaseConnector
+import org.elcer.accounts.core.Account
+import org.elcer.accounts.utils.db.DatabaseConnector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -16,7 +16,7 @@ sealed trait AccountStorage {
 
   def saveAccount(account: Account): Future[Account]
 
-  def transferFunds(from: Account, to: Account, amount: Float): Unit
+  def transferFunds(from: Account, to: Account, amount: BigDecimal): Unit
 }
 
 class JdbcAccountStorage(
@@ -30,21 +30,26 @@ class JdbcAccountStorage(
 
   def getAccounts: Future[Seq[Account]] = db.run(accounts.result)
 
+
+
   def getAccount(id: Int): Future[Option[Account]] = db.run(accounts.filter(_.id === id).result.headOption)
 
   def saveAccount(account: Account): Future[Account] =
     db.run(accounts.insertOrUpdate(account)).map(_ => account)
 
-  def transferFunds(from: Account, to: Account, amount: Float): Unit = {
+
+
+  def transferFunds(from: Account, to: Account, amount: BigDecimal): Unit = {
     val fromRows = accounts.filter(_.id === from.id).map(_.balance)
     val toRows = accounts.filter(_.id === to.id).map(_.balance)
+
     val actions = (for {
       balanceFrom <- fromRows.result.headOption
-      updateActionOptionFrom = balanceFrom.map(b => fromRows.update(-amount))
-      affected <- updateActionOptionFrom.getOrElse(DBIO.successful(0))
+      updateActionOptionFrom = balanceFrom.map(_ => fromRows.update(-amount))
+      _ <- updateActionOptionFrom.getOrElse(DBIO.successful(0))
 
       balanceTo <- toRows.result.headOption
-      updateActionOptionTo = balanceTo.map(b => toRows.update(amount))
+      updateActionOptionTo = balanceTo.map(_ => toRows.update(amount))
       affected <- updateActionOptionTo.getOrElse(DBIO.successful(0))
     } yield affected).transactionally
 
@@ -72,16 +77,16 @@ class InMemoryAccountStorage extends AccountStorage {
       account
     }
 
-  override def transferFunds(from: Account, to: Account, amount: Float): Unit = {
-    var fromLock = locks.getOrElseUpdate(from.id, new Semaphore(1))
-    var toLock = locks.getOrElseUpdate(to.id, new Semaphore(1))
+  override def transferFunds(from: Account, to: Account, amount: BigDecimal): Unit = {
+    val fromLock = locks.getOrElseUpdate(from.id, new Semaphore(1))
+    val toLock = locks.getOrElseUpdate(to.id, new Semaphore(1))
 
     if (from.id < to.id) {
       fromLock.acquire()
       toLock.acquire()
-          } else {
-            toLock.acquire()
-            fromLock.acquire()
+    } else {
+      toLock.acquire()
+      fromLock.acquire()
     }
 
     from.balance -= amount

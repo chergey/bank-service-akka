@@ -1,16 +1,16 @@
-package org.elcer.restapi.core.accounts
+package org.elcer.accounts.core.account
 
-import org.elcer.restapi.core.Account
-import org.elcer.restapi.utils.db.DatabaseConnector
+import org.elcer.accounts.core.Account
+import org.elcer.accounts.utils.db.DatabaseConnector
 
-private[accounts] trait AccountTable {
+private[account] trait AccountTable {
 
   protected val databaseConnector: DatabaseConnector
   import databaseConnector.account.api._
 
   class Accounts(tag: Tag) extends Table[Account](tag, "accounts") {
     def id        = column[Int]("id", O.PrimaryKey)
-    def balance = column[Float]("balance")
+    def balance = column[BigDecimal]("balance")
     def name  = column[String]("name")
 
     def * = (id, balance, name) <>

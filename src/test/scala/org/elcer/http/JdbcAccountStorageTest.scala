@@ -1,17 +1,18 @@
 package org.elcer.http
 
-import java.util.concurrent.{ExecutorService, Executors, TimeUnit}
+import java.util
+import java.util.concurrent._
 
 import org.elcer.BaseServiceTest
 import org.elcer.restapi.core.Account
 import org.elcer.restapi.core.accounts.{AccountStorage, InMemoryAccountStorage, JdbcAccountStorage}
-import org.elcer.utils.InMemoryPostgresStorage
+import org.elcer.utils.ApacheDbStorage
 
 import scala.util.Random
 
 class JdbcAccountStorageTest extends AccountStorageSpec {
   override def accountStorageBuilder(): AccountStorage =
-    new JdbcAccountStorage(InMemoryPostgresStorage.databaseConnector)
+    new JdbcAccountStorage(ApacheDbStorage.databaseConnector)
 }
 
 class InMemoryAccountStorageTest extends AccountStorageSpec {
@@ -30,14 +31,13 @@ abstract class AccountStorageSpec extends BaseServiceTest {
       "return account by id" in new Context {
         awaitForResult(for {
           _ <- accountStorage.saveAccount(testAcc1)
-          _ <- accountStorage.saveAccount(testAcc2)
-          maybeProfile <- accountStorage.getAccount(testAccountId)
+          maybeProfile <- accountStorage.getAccount(testAcc1.id)
         } yield maybeProfile shouldBe Some(testAcc1))
       }
 
       "return None if account not found" in new Context {
         awaitForResult(for {
-          maybeProfile <- accountStorage.getAccount(111)
+          maybeProfile <- accountStorage.getAccount(1111111111)
         } yield maybeProfile shouldBe None)
       }
 
@@ -54,47 +54,45 @@ abstract class AccountStorageSpec extends BaseServiceTest {
 
     }
 
+
     "updateBalance" should {
       "handle concurrency" in new EmptyContext {
 
-        val TIMES = 1000
+        val TIMES = 10000
 
-        val testAcc1: Account = Account(1, 32000, Random.nextString(10))
-        val testAcc2: Account = Account(2, 31000, Random.nextString(10))
+        val testAcc1: Account = Account(1, 100000, Random.nextString(10))
+        val testAcc2: Account = Account(2, 100000, Random.nextString(10))
 
-        val startBalance = testAcc1.balance + testAcc2.balance
-
-        awaitNoResult(for {
+        private val startBalance = testAcc1.balance + testAcc2.balance
+        awaitForResult(for {
           _ <- accountStorage.saveAccount(testAcc2)
           _ <- accountStorage.saveAccount(testAcc1)
         } yield null)
 
-        var task1: Runnable = () =>
-          accountStorage.transferFunds(testAcc1, testAcc2, Math.abs(Random.nextInt(100)))
 
-        var task2: Runnable = () =>
-          accountStorage.transferFunds(testAcc2, testAcc1, Math.abs(Random.nextInt(100)))
+        var task1: () => Unit = () => transfer(testAcc1, testAcc2)
+        var task2: () => Unit = () => transfer(testAcc2, testAcc1)
 
-        val pool: ExecutorService = Executors.newFixedThreadPool(2)
-
-        var i = TIMES
-        while (i > 0) {
-          pool.execute(task1)
-          pool.execute(task2)
-          i -= 1
-        }
-
-        pool.awaitTermination(Int.MaxValue, TimeUnit.SECONDS)
+        runConcurrently(task1, task2)
 
         awaitForResult(for {
           resultAcc1 <- accountStorage.getAccount(1)
           resultAcc2 <- accountStorage.getAccount(2)
         } yield {
           val endBalance = resultAcc1.get.balance + resultAcc2.get.balance
-          println(endBalance, startBalance)
           endBalance shouldBe startBalance
-
+          println(endBalance, startBalance)
         })
+
+
+        def transfer(debit: Account, credit: Account): Unit = {
+          var i = TIMES
+          while (i > 0) {
+            val amount = Math.abs(Random.nextInt(1000))
+            accountStorage.transferFunds(debit, credit, amount)
+            i -= 1
+          }
+        }
       }
     }
     "saveAccount" should {
@@ -102,11 +100,12 @@ abstract class AccountStorageSpec extends BaseServiceTest {
       "save account to database" in new Context {
         awaitForResult(for {
           _ <- accountStorage.saveAccount(testAcc1)
-          maybeAcc <- accountStorage.getAccount(testAccountId)
+          maybeAcc <- accountStorage.getAccount(testAcc1.id)
         } yield maybeAcc shouldBe Some(testAcc1))
       }
 
     }
+
 
   }
 
@@ -116,16 +115,40 @@ abstract class AccountStorageSpec extends BaseServiceTest {
 
     def createTestAcc(id: Int) =
       Account(id, Random.nextFloat(), Random.nextString(10))
-
   }
 
 
-  trait Context extends EmptyContext {
+  def runConcurrently(tasks: () => Unit*): Unit = {
+    import scala.collection.JavaConverters._
 
-    val testAccountId = Math.abs(Random.nextInt())
-    val testAccountId2 = Math.abs(Random.nextInt())
-    val testAcc1: Account = createTestAcc(testAccountId)
-    val testAcc2: Account = createTestAcc(testAccountId2)
+
+    if (tasks.isEmpty) throw new IllegalArgumentException("number of tasks must be > 0")
+    val executor: ExecutorService = Executors.newFixedThreadPool(2)
+
+    var adaptedTasks = seqAsJavaList(tasks.map(r => {
+      new Callable[Void] {
+        override def call(): Void = {
+          r()
+          null
+        }
+      }
+    })
+    )
+
+    val futures: util.List[Future[Void]] = executor.invokeAll(adaptedTasks)
+
+    for (future <- futures.asScala) {
+      future
+    }
+
+    executor.shutdown()
+  }
+
+  trait Context extends EmptyContext {
+    private val testAccountId = Math.abs(Random.nextInt())
+    private val testAccountId2 = Math.abs(Random.nextInt())
+    protected val testAcc1: Account = createTestAcc(testAccountId)
+    protected val testAcc2: Account = createTestAcc(testAccountId2)
 
   }
 
