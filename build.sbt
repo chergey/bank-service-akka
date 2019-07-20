@@ -39,7 +39,7 @@ libraryDependencies ++= {
     // Parsing and generating of JWT tokens
     "com.pauldijou" %% "jwt-core" % "3.1.0",
 
-    // Config file parser
+  // Config file parser
     "com.github.pureconfig" %% "pureconfig" % "0.11.1",
 
     // JSON serialization library
@@ -61,6 +61,7 @@ libraryDependencies ++= {
     "org.apache.derby" % "derby" % "10.14.2.0" ,
 
     "org.mockito" % "mockito-all" % "1.9.5" % Test
+
   )
 }
 

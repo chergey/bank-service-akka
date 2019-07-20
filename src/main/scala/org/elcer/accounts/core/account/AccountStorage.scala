@@ -4,7 +4,7 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.locks.{Lock, ReentrantLock, ReentrantReadWriteLock}
 
 import org.elcer.accounts.core.Account
-import org.elcer.accounts.utils.db.DatabaseConnector
+import org.elcer.accounts.core.db.DatabaseConnector
 
 import scala.concurrent.{ExecutionContext, Future}
 

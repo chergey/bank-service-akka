@@ -7,9 +7,6 @@ object MonadTransformers {
 
   implicit class FutureOptionMonadTransformer[A](t: Future[Option[A]])(implicit executionContext: ExecutionContext) {
 
-    def map2[B](f: A => B, orElse: B): Future[B] =
-      t.map(_.map(f).getOrElse(orElse))
-
     def mapT[B](f: A => B): Future[Option[B]] =
       t.map(_.map(f))
 

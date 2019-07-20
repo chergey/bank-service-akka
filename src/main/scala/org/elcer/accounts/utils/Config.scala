@@ -10,7 +10,7 @@ object Config {
 
   def load(): Config =
     loadConfig[Config] match {
-      case Right(config: Config) => config
+      case Right(config) => config
       case Left(error) =>
         throw new RuntimeException("Cannot read config file, errors:\n" + error.toList.mkString("\n"))
     }

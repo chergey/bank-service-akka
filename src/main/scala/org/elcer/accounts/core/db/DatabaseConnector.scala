@@ -1,4 +1,4 @@
-package org.elcer.accounts.utils.db
+package org.elcer.accounts.core.db
 
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 

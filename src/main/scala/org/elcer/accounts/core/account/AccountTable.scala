@@ -1,7 +1,7 @@
 package org.elcer.accounts.core.account
 
 import org.elcer.accounts.core.Account
-import org.elcer.accounts.utils.db.DatabaseConnector
+import org.elcer.accounts.core.db.DatabaseConnector
 
 private[account] trait AccountTable {
 

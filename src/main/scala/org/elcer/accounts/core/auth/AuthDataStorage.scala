@@ -1,7 +1,7 @@
 package org.elcer.accounts.core.auth
 
 import org.elcer.accounts.core.AuthData
-import org.elcer.accounts.utils.db.DatabaseConnector
+import org.elcer.accounts.core.db.DatabaseConnector
 
 import scala.concurrent.{ExecutionContext, Future}
 

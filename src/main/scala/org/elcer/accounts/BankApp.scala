@@ -7,7 +7,7 @@ import org.elcer.accounts.core.account.{AccountService, JdbcAccountStorage}
 import org.elcer.accounts.core.auth.{AuthService, JdbcAuthDataStorage}
 import org.elcer.accounts.http.HttpRoute
 import org.elcer.accounts.utils.Config
-import org.elcer.accounts.utils.db.{DatabaseConnector, DatabaseMigrationManager}
+import org.elcer.accounts.core.db.{DatabaseConnector, DatabaseMigrationManager}
 
 import scala.concurrent.ExecutionContext
 
