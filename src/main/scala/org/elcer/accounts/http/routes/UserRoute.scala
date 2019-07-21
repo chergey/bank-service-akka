@@ -5,12 +5,12 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import io.circe.generic.auto._
-import org.elcer.accounts.core.auth.AuthService
+import org.elcer.accounts.core.user.UserService
 import org.elcer.accounts.utils.FailFastCirceSupport
 
 import scala.concurrent.ExecutionContext
 
-class AuthRoute(authService: AuthService)(implicit executionContext: ExecutionContext)
+class UserRoute(authService: UserService)(implicit executionContext: ExecutionContext)
   extends FailFastCirceSupport {
 
   import StatusCodes._

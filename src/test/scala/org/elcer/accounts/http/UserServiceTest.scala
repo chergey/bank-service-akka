@@ -3,13 +3,13 @@ package org.elcer.accounts.http
 import akka.http.scaladsl.model.{HttpEntity, MediaTypes}
 import akka.http.scaladsl.server.Route
 import org.elcer.accounts.BaseServiceTest
-import org.elcer.accounts.core.auth.AuthService
-import org.elcer.accounts.http.routes.AuthRoute
+import org.elcer.accounts.core.user.UserService
+import org.elcer.accounts.http.routes.UserRoute
 import org.mockito.Mockito._
 
 import scala.concurrent.Future
 
-class AuthRouteTest extends BaseServiceTest {
+class UserServiceTest extends BaseServiceTest {
 
   "AuthRoute" when {
 
@@ -53,8 +53,8 @@ class AuthRouteTest extends BaseServiceTest {
   }
 
   trait Context {
-    val authService: AuthService = mock[AuthService]
-    val authRoute: Route = new AuthRoute(authService).route
+    val authService: UserService = mock[UserService]
+    val authRoute: Route = new UserRoute(authService).route
   }
 
 }

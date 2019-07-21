@@ -17,7 +17,6 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-actor" % "2.6.0-M4",
     "com.typesafe.akka" %% "akka-stream" % "2.6.0-M4",
 
-
   // Support of CORS requests, version depends on akka-http
     "ch.megard" %% "akka-http-cors" % "0.4.1",
 

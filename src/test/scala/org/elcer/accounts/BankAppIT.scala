@@ -1,4 +1,4 @@
-package org.elcer
+package org.elcer.accounts
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
@@ -10,14 +10,14 @@ import scala.concurrent.Future
 
 class BankAppIT extends BaseServiceTest {
 
-  implicit val sttpBackend: SttpBackend[Future, Source[ByteString, Any]] = AkkaHttpBackend()
+  implicit val backend: SttpBackend[Future, Source[ByteString, Any]] = AkkaHttpBackend()
 
   "Service" should {
 
     "bind on port successfully and answer on health checks" in {
       awaitForResult(for {
         serverBinding <- BankApp.startApplication()
-        healthCheckResponse <- sttp.get(uri"http://localhost:9000/healthcheck").send()
+        healthCheckResponse <- sttp.get(uri"http://localhost:8082/healthcheck").send()
         _ <- serverBinding.unbind()
       } yield {
         healthCheckResponse.code shouldBe 200

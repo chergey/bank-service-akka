@@ -1,17 +1,25 @@
 package org.elcer.accounts
 
-import java.util
-import java.util.concurrent._
-
 import org.elcer.accounts.core.Account
 import org.elcer.accounts.core.account.{AccountStorage, InMemoryAccountStorage, JdbcAccountStorage}
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import org.elcer.accounts.core.db.{DatabaseConnector, DatabaseMigrationManager}
+import org.elcer.accounts.utils.Config
+
+import scala.concurrent.Future
 import scala.util.Random
 
 class JdbcAccountStorageTest extends AccountStorageSpec {
-  override def accountStorageBuilder(): AccountStorage =
-    new JdbcAccountStorage(ApacheDbStorage.databaseConnector)
+  override def accountStorageBuilder(): AccountStorage = {
+    val config = Config.load()
+
+    new DatabaseMigrationManager(config.database.jdbcUrl, config.database.username, config.database.password)
+      .migrateDatabaseSchema()
+
+    val databaseConnector = new DatabaseConnector(config.database.jdbcUrl, config.database.username,
+      config.database.password)
+
+    new JdbcAccountStorage(databaseConnector)
+  }
 }
 
 class InMemoryAccountStorageTest extends AccountStorageSpec {
@@ -58,8 +66,8 @@ abstract class AccountStorageSpec extends BaseServiceTest {
 
         val TIMES = 10000
 
-        val testAcc1: Account = Account(1, 100000, Random.nextString(10))
-        val testAcc2: Account = Account(2, 100000, Random.nextString(10))
+        val testAcc1: Account = Account(1, 1, 100000, Random.nextString(10))
+        val testAcc2: Account = Account(2, 1, 100000, Random.nextString(10))
 
         private val startBalance = testAcc1.balance + testAcc2.balance
         awaitForResult(for {
@@ -112,24 +120,20 @@ abstract class AccountStorageSpec extends BaseServiceTest {
     val accountStorage: AccountStorage = accountStorageBuilder()
 
     def createTestAcc(id: Int) =
-      Account(id, BigDecimal(Random.nextInt()), Random.nextString(10))
+      Account(id, 1, BigDecimal(Random.nextInt()), Random.nextString(10))
   }
 
 
   def runConcurrently(tasks: () => Unit*): Unit = {
     if (tasks.isEmpty) throw new IllegalArgumentException("number of tasks must be > 0")
 
-    val list = collection.mutable.ListBuffer[Future[Unit]]()
+    val futures = collection.mutable.ListBuffer[Future[Unit]]()
     for (t <- tasks) {
-      val f = Future[Unit] {
-        t()
-      }
-      list += f
+      futures += Future[Unit] (t)
     }
 
-    for (elem <- list) {
+    for (elem <- futures)
       awaitForResult(elem)
-    }
 
   }
 

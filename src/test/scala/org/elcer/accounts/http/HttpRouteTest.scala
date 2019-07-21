@@ -3,7 +3,7 @@ package org.elcer.accounts.http
 import akka.http.scaladsl.server.Route
 import org.elcer.accounts.BaseServiceTest
 import org.elcer.accounts.core.account.AccountService
-import org.elcer.accounts.core.auth.AuthService
+import org.elcer.accounts.core.user.UserService
 
 
 class HttpRouteTest extends BaseServiceTest {
@@ -26,7 +26,7 @@ class HttpRouteTest extends BaseServiceTest {
   trait Context {
     val secretKey = "secret"
     val accountService: AccountService = mock[AccountService]
-    val authService: AuthService = mock[AuthService]
+    val authService: UserService = mock[UserService]
 
     val httpRoute: Route = new HttpRoute(accountService, authService, secretKey).route
   }
